@@ -1,0 +1,23 @@
+version: "3"
+
+vars:
+  CONDA_PRELUDE:
+    sh: conda env export | sed '/dependencies:/q'
+  DEPENDENCIES:
+    sh: conda list | grep -E -i -w "^$(conda env export --no-builds --from-history | awk '$1 == "-"{ if (key == "dependencies:") print $NF; next } {key=$1}' | sed 's/=.*//' | tr -s '\r\n' '|' | sed 's/|$//')\s" | awk '{ print $1 "=" $2 }' | sed 's/^/  - /'
+
+tasks:
+  gen_linux_env_yaml:
+    cmds:
+      - |-
+        tee environment.linux.yml << EOF
+        {{.CONDA_PRELUDE}}
+        {{.DEPENDENCIES}}
+        EOF
+  gen_macos_env_yaml:
+    cmds:
+      - |-
+        tee environment.macos.yml << EOF
+        {{.CONDA_PRELUDE}}
+        {{.DEPENDENCIES}}
+        EOF
